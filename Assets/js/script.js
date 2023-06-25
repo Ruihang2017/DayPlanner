@@ -1,31 +1,52 @@
-// Wrap all code that interacts with the DOM in a call to jQuery to ensure that
-// the code isn't run until the browser has finished rendering all the elements
-// in the html.
+
 $(function () {
-  // TODO: Add a listener for click events on the save button. This code should
-  // use the id in the containing time-block as a key to save the user input in
-  // local storage. HINT: What does `this` reference in the click listener
-  // function? How can DOM traversal be used to get the "hour-x" id of the
-  // time-block containing the button that was clicked? How might the id be
-  // useful when saving the description in local storage?
+
   let hours = document.getElementById("hours");
   let currentDay = document.getElementById("currentDay");
 
-  const timeStart = 1;
-  const timeEnd = 24;
+  const timeStart = 9;
+  const timeEnd = 17;
 
   let currentDate;
   let currentHour;
   let currentHour24;
-  let currentMinute;
 
+  let taskArray = [];
+
+
+  // set the task array
+  let setTaskArray = (theId, theValue) => {
+    if (taskArray.length === 0) {
+      taskArray.push({ id: theId, value: theValue });
+      return;
+    } else {
+      for (let task of taskArray) {
+        if (task.id === theId) {
+
+          task.value = theValue;
+          taskFound = true;
+          return;
+        }
+      }
+    }
+    taskArray.push({ id: theId, value: theValue });
+  }
+
+
+  // on save button click
   hours.addEventListener("click", (event) => {
-    console.log(event.target.nodeName);
-    // $('#1a').text(today.format('MMM D, YYYY'));
-
-    // if (event.target.matches("textarea")) {
-    //   console.log("textarea");
-    // }
+    let textarea, id;
+    if (event.target.matches("button")) {
+      textarea = event.target.parentNode.querySelector("textarea");
+      id = event.target.parentNode.id;
+      setTaskArray(id, textarea.value);
+      localStorage.setItem("taskArray", JSON.stringify(taskArray));
+    } else if (event.target.matches("i")) {
+      textarea = event.target.parentNode.parentNode.querySelector("textarea");
+      id = event.target.parentNode.parentNode.id;
+      setTaskArray(id, textarea.value);
+      localStorage.setItem("taskArray", JSON.stringify(taskArray));
+    }
   })
 
 
@@ -47,17 +68,28 @@ $(function () {
     if (currentHourInt === time) {
       timeState = "present";
     } else if (currentHourInt < time) {
-      timeState = "past";
-    } else {
       timeState = "future";
+    } else {
+      timeState = "past";
+    }
+    id = `hour-${time}`;
+
+    let value = "";
+    for (let task of taskArray) {
+      // console.log(task.id);
+
+      if (task.id === id) {
+        value = task.value;
+      }
     }
 
     const additionalInnerText =
-      `<div id="hour-${time}" class="row time-block ${timeState}">` +
+      `<div id="${id}" class="row time-block ${timeState}">` +
       '<div class="col-2 col-md-1 hour text-center py-3">' +
       twentyFourToTwelve(time) +
       '</div>' +
       '<textarea class="col-8 col-md-10 description" rows = "3" >' +
+      value +
       '</textarea >' +
       '<button class="btn saveBtn col-2 col-md-1" aria-label="save">' +
       '<i class="fas fa-save" aria-hidden="true"></i>' +
@@ -83,29 +115,24 @@ $(function () {
 
   let onload = () => {
     refreshTime();
+
+    // get the localstorage of the task list
+    let array = JSON.parse(localStorage.getItem("taskArray"));
+    if (array) {
+      taskArray = array;
+    }
+
+    // create the list
     for (let i = timeStart; i < timeEnd + 1; i++) {
       creatOneTimeDiv(i);
     }
 
     //set the time counter
     setInterval(refreshTime, 1000);
-
   }
 
   onload();
 
-
-  // TODO: Add code to apply the past, present, or future class to each time
-  // block by comparing the id to the current hour. HINTS: How can the id
-  // attribute of each time-block be used to conditionally add or remove the
-  // past, present, and future classes? How can Day.js be used to get the
-  // current hour in 24-hour time?
-  //
-  // TODO: Add code to get any user input that was saved in localStorage and set
-  // the values of the corresponding textarea elements. HINT: How can the id
-  // attribute of each time-block be used to do this?
-  //
-  // TODO: Add code to display the current date in the header of the page.
 });
 
 
